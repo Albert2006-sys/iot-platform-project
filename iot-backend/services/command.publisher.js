@@ -1,0 +1,22 @@
+const mqtt = require('mqtt');
+
+let commandClient;
+
+const initializeCommandPublisher = () => {
+  commandClient = mqtt.connect('mqtt://localhost:1883');
+  commandClient.on('connect', () => console.log('📢 Command Publisher connected to MQTT broker'));
+  commandClient.on('error', (err) => console.error('Command Publisher MQTT error:', err));
+};
+
+const publishCommand = (topic, payload) => {
+  if (commandClient && commandClient.connected) {
+    commandClient.publish(topic, JSON.stringify(payload), (err) => {
+      if (err) console.error('Failed to publish command:', err);
+      else console.log(`Published command to ${topic}:`, payload);
+    });
+  } else {
+    console.error('Command Publisher is not connected.');
+  }
+};
+
+module.exports = { initializeCommandPublisher, publishCommand };
