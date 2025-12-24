@@ -184,4 +184,4 @@ Contributions, issues, and feature requests are welcome!
 
 ## 📧 Support
 
-For support, email albertokello23@gmail.com or open an issue in the repository.
+For support, email albertjohn1639@gmail.com or open an issue in the repository.
