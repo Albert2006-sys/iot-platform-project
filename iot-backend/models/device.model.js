@@ -1,17 +1,21 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Sub-schema for data key aliases
-const schemaEntrySchema = mongoose.Schema({
-  key: { type: String, required: true },
-  displayName: { type: String, required: true },
+// Sub-schema for flexible data mapping
+const dataMapSchema = mongoose.Schema({
+  raw_key: { type: String, required: true },
+  alias: { type: String, required: true },
+  type: { type: String, default: 'number' }, // number, boolean, string
+  unit: { type: String, default: '' },
+  widget: { type: String, default: 'text' } // gauge, line, text
 }, { _id: false });
 
 // Sub-schema for control widgets
 const controlSchema = mongoose.Schema({
   type: { type: String, required: true, enum: ['slider', 'button', 'switch'] },
   label: { type: String, required: true },
-  commandKey: { type: String, required: true },
+  command_key: { type: String, required: true },
+  payload: { type: mongoose.Schema.Types.Mixed }, // Payload to send (e.g., 'ON')
   min: { type: Number },
   max: { type: Number },
 });
@@ -22,13 +26,19 @@ const deviceSchema = mongoose.Schema({
   group: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['online', 'offline'], default: 'offline' },
+  
+  // Customizable MQTT settings
+  broker_url: { type: String, default: '8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud' }, 
+  broker_port: { type: Number, default: 8883 },
+  client_id: { type: String },
+
   telemetryTopic: { type: String, required: true, unique: true },
   commandTopic: { type: String, required: true, unique: true },
   credentials: {
     username: { type: String, required: true, unique: true },
     secret: { type: String, required: true },
   },
-  schema: [schemaEntrySchema],
+  data_map: [dataMapSchema],
   controls: [controlSchema],
 }, { timestamps: true });
 

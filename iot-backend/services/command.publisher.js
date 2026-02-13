@@ -3,7 +3,12 @@ const mqtt = require('mqtt');
 let commandClient;
 
 const initializeCommandPublisher = () => {
-  commandClient = mqtt.connect('mqtt://localhost:1883');
+    // HiveMQ Cloud Connection
+  commandClient = mqtt.connect('mqtts://8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud:8883', {
+        username: 'Iotdevice',
+        password: 'Jeremy@2016',
+        rejectUnauthorized: true,
+    });
   commandClient.on('connect', () => console.log('📢 Command Publisher connected to MQTT broker'));
   commandClient.on('error', (err) => console.error('Command Publisher MQTT error:', err));
 };

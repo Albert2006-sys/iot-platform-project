@@ -7,11 +7,11 @@ export default function DeviceCard({ device, onDelete }) {
   const handleDeleteClick = (e) => {
     e.stopPropagation(); // Prevent navigating to the detail page
     e.preventDefault();
-    onDelete(device._id);
+    onDelete(device.deviceId);
   };
 
   return (
-    <Link href={`/device/${device._id}`} className="relative block p-4 text-left">
+    <Link href={`/device/${device.deviceId}`} className="relative block p-4 text-left">
         <div className="flex items-start justify-between mb-2">
             <div>
                 <h3 className="text-lg font-bold text-slate-200">{device.deviceType}</h3>

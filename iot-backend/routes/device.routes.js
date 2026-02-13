@@ -6,7 +6,8 @@ const {
   deleteDevice,
   updateDeviceSchema,
   addDeviceControl,
-  updateDeviceControl
+  updateDeviceControl,
+  updateDevice
 } = require('../controllers/device.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -20,7 +21,8 @@ router.route('/')
 
 router.route('/:id')
   .get(getDeviceById)
-  .delete(deleteDevice);
+  .delete(deleteDevice)
+  .patch(updateDevice);
 
 router.route('/:id/schema')
   .patch(updateDeviceSchema);

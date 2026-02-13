@@ -5,8 +5,9 @@ const telemetrySchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  payload: {
-    type: mongoose.Schema.Types.Mixed,
+  values: {
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
     required: true,
   },
   timestamp: {

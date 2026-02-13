@@ -58,12 +58,37 @@ const initializeWebSocket = (server) => {
     });
   });
 
-  // Listen for internal events to broadcast data
+  // Listen for device status updates (Online/Offline)
+  eventEmitter.on('status-update', async ({ deviceId, status }) => {
+    try {
+      const device = await Device.findOne({ deviceId }).select('user');
+      if (device && device.user) {
+        io.to(device.user.toString()).emit('device-status', { deviceId, status });
+        console.log(`📡 Broadcasted status update for ${deviceId}: ${status}`);
+      }
+    } catch (error) {
+      console.error('Error broadcasting status update:', error);
+    }
+  });
+
+  // Listen for new telemetry data (from MQTT)
   eventEmitter.on('new-data', async ({ deviceId, data }) => {
     try {
       const device = await Device.findOne({ deviceId }).select('user');
       if (device && device.user) {
-        io.to(device.user.toString()).emit('live-telemetry', { deviceId, data });
+        const records = Array.isArray(data) ? data : [data];
+        records.forEach(record => {
+           const updateData = {
+             deviceId,
+             payload: record,
+             timestamp: record.timestamp || new Date(),
+             status: 'online'
+           };
+           io.to(device.user.toString()).emit('live-telemetry', updateData);
+        });
+        
+        // Ensure status is synced as online
+        io.to(device.user.toString()).emit('device-status', { deviceId, status: 'online' });
       }
     } catch (error) {
       console.error('Error broadcasting new data:', error);

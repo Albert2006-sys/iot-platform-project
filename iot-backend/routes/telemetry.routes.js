@@ -1,8 +1,10 @@
 const express = require('express');
-const { getTelemetry, getTelemetrySummary } = require('../controllers/telemetry.controller');
+const { createTelemetry, getTelemetry, getTelemetrySummary, getDeviceInsights } = require('../controllers/telemetry.controller');
 const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
+
+router.post('/:deviceId', createTelemetry);
 
 router.use(protect);
 
@@ -11,5 +13,8 @@ router.route('/:deviceId')
 
 router.route('/:deviceId/summary')
   .get(getTelemetrySummary);
+
+router.route('/:deviceId/insights')
+    .get(getDeviceInsights);
 
 module.exports = router;

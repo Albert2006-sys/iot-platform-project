@@ -7,17 +7,35 @@ const bcrypt = require('bcryptjs');
 // @route   POST /api/devices
 const registerDevice = asyncHandler(async (req, res) => {
     // --- FIX: Changed 'group' to 'groupId' to match the frontend form ---
-    const { deviceType, groupId } = req.body; 
+    const { deviceType, groupId, customDeviceId, customTelemetryTopic } = req.body; 
     if (!deviceType) {
         res.status(400);
         throw new Error('Device type is required');
     }
 
-    const deviceId = uuidv4();
+    const deviceId = customDeviceId || uuidv4();
     const plainSecret = uuidv4();
 
     const salt = await bcrypt.genSalt(10);
     const hashedSecret = await bcrypt.hash(plainSecret, salt);
+    
+    // Check if custom ID or Topic already exists
+    if (customDeviceId) {
+        const exists = await Device.findOne({ deviceId: customDeviceId });
+        if (exists) {
+            res.status(400);
+            throw new Error(`Device ID '${customDeviceId}' is already taken.`);
+        }
+    }
+
+    const telemetryTopic = customTelemetryTopic || `devices/${deviceId}/data`;
+    if (customTelemetryTopic) {
+        const exists = await Device.findOne({ telemetryTopic: customTelemetryTopic });
+        if (exists) {
+             res.status(400);
+            throw new Error(`Topic '${customTelemetryTopic}' is already in use.`);
+        }
+    }
 
     const device = await Device.create({
         deviceId,
@@ -25,7 +43,7 @@ const registerDevice = asyncHandler(async (req, res) => {
         // --- FIX: Use the 'groupId' variable to associate the group ---
         group: groupId || null, 
         user: req.user.id,
-        telemetryTopic: `devices/${deviceId}/data`,
+        telemetryTopic: telemetryTopic,
         commandTopic: `devices/${deviceId}/commands`,
         credentials: {
             username: deviceId,
@@ -51,7 +69,7 @@ const getDevices = asyncHandler(async (req, res) => {
 // @desc    Get a single device by ID
 // @route   GET /api/devices/:id
 const getDeviceById = asyncHandler(async (req, res) => {
-    const device = await Device.findOne({ _id: req.params.id, user: req.user.id })
+    const device = await Device.findOne({ deviceId: req.params.id, user: req.user.id })
         .populate('group', 'name')
         .select('-credentials.secret');
 
@@ -66,7 +84,7 @@ const getDeviceById = asyncHandler(async (req, res) => {
 // @desc    Delete a device
 // @route   DELETE /api/devices/:id
 const deleteDevice = asyncHandler(async (req, res) => {
-    const device = await Device.findOne({ _id: req.params.id, user: req.user.id });
+    const device = await Device.findOne({ deviceId: req.params.id, user: req.user.id });
 
     if (!device) {
         res.status(404);
@@ -79,13 +97,15 @@ const deleteDevice = asyncHandler(async (req, res) => {
 });
 
 // Other functions remain the same...
-// @desc    Update a device's schema (display names)
+// @desc    Update a device's data map (schema)
 // @route   PATCH /api/devices/:id/schema
 const updateDeviceSchema = asyncHandler(async (req, res) => {
-    const { schema } = req.body;
+    // Expect 'data_map' in body, fall back to 'schema' for compatibility if needed, 
+    // or just switch to 'data_map'.
+    const { data_map, schema } = req.body;
     const device = await Device.findOneAndUpdate(
-        { _id: req.params.id, user: req.user.id },
-        { schema: schema },
+        { deviceId: req.params.id, user: req.user.id },
+        { data_map: data_map || schema }, 
         { new: true, runValidators: true }
     );
 
@@ -93,7 +113,7 @@ const updateDeviceSchema = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error('Device not found');
     }
-    res.json(device.schema);
+    res.json(device.data_map);
 });
 
 // @desc    Add a new control to a device
@@ -101,7 +121,7 @@ const updateDeviceSchema = asyncHandler(async (req, res) => {
 // Replace it with this block
 const addDeviceControl = asyncHandler(async (req, res) => {
   // First, find the device by its ID
-  const device = await Device.findById(req.params.id);
+  const device = await Device.findOne({ deviceId: req.params.id });
 
   // THEN, check if the device exists and if the user owns it
   if (!device || device.user.toString() !== req.user.id) {
@@ -119,7 +139,7 @@ const addDeviceControl = asyncHandler(async (req, res) => {
 // @desc    Update an existing device control
 // @route   PUT /api/devices/:id/controls/:controlId
 const updateDeviceControl = asyncHandler(async (req, res) => {
-    const device = await Device.findOne({ _id: req.params.id, user: req.user.id });
+    const device = await Device.findOne({ deviceId: req.params.id, user: req.user.id });
     if (!device) {
         res.status(404);
         throw new Error('Device not found');
@@ -134,6 +154,25 @@ const updateDeviceControl = asyncHandler(async (req, res) => {
     res.json(device.controls);
 });
 
+// @desc    Update device settings (broker, etc)
+// @route   PATCH /api/devices/:id
+const updateDevice = asyncHandler(async (req, res) => {
+    const device = await Device.findOne({ deviceId: req.params.id, user: req.user.id });
+    if (!device) {
+        res.status(404);
+        throw new Error('Device not found');
+    }
+
+    const { broker_url, broker_port, client_id, name } = req.body;
+    
+    if (broker_url !== undefined) device.broker_url = broker_url;
+    if (broker_port !== undefined) device.broker_port = broker_port;
+    if (client_id !== undefined) device.client_id = client_id;
+    if (name !== undefined) device.name = name;
+
+    await device.save();
+    res.json(device);
+});
 
 module.exports = {
     registerDevice,
@@ -143,5 +182,6 @@ module.exports = {
     updateDeviceSchema,
     addDeviceControl,
     updateDeviceControl,
+    updateDevice,
 };
 

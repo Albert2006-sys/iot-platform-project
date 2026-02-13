@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import io from 'socket.io-client'; // Import Socket.io client
 import ProtectedRoute from '../components/ProtectedRoute';
 import api from '../services/api';
+import { useAuth } from '../services/context/AuthContext'; // Import AuthContext
 import DeviceCard from '../components/DeviceCard';
 import Modal from '../components/Modal';
 import AddDeviceForm from '../components/AddDeviceForm';
 import AddGroupForm from '../components/AddGroupForm';
 
 function DashboardPage() {
+    const { token } = useAuth(); // Get auth token for socket
     const [user, setUser] = useState(null);
     const [groups, setGroups] = useState([]);
     const [devices, setDevices] = useState([]);
@@ -38,6 +41,42 @@ function DashboardPage() {
         fetchData();
     }, []);
 
+    // Real-time status updates via Socket.io
+    useEffect(() => {
+        if (!token) return;
+
+        const socket = io('http://localhost:5000', {
+            auth: { token },
+            transports: ['websocket'],
+        });
+
+        socket.on('connect', () => {
+            console.log('Dashboard connected to WebSocket');
+        });
+
+        socket.on('device-status', ({ deviceId, status }) => {
+            console.log(`Received status update for ${deviceId}: ${status}`);
+            setDevices(prevDevices => 
+                prevDevices.map(device => 
+                    device.deviceId === deviceId ? { ...device, status } : device
+                )
+            );
+        });
+
+        // Also listen for live-telemetry to set device online if data arrives
+        socket.on('live-telemetry', ({ deviceId }) => {
+             setDevices(prevDevices => 
+                prevDevices.map(device => 
+                    device.deviceId === deviceId ? { ...device, status: 'online' } : device
+                )
+            );
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [token]);
+
     const handleDeviceAdded = () => {
         fetchData();
     };
@@ -52,7 +91,7 @@ function DashboardPage() {
         if (confirm('Are you sure you want to decommission this device?')) {
             try {
                 await api.delete(`/devices/${deviceId}`);
-                setDevices(currentDevices => currentDevices.filter(device => device._id !== deviceId));
+                setDevices(currentDevices => currentDevices.filter(device => device.deviceId !== deviceId));
             } catch (err) {
                 console.error("Failed to delete device", err);
                 setError('Could not decommission the device. Please try again.');

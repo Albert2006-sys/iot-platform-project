@@ -1,4 +1,6 @@
-# IoT Platform Project
+# LumenLink
+
+*Illuminate the invisible. Link the impossible.*
 
 A full-stack IoT platform for managing and monitoring IoT devices with real-time data visualization, MQTT communication, and AI-powered analytics.
 
