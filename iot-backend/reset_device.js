@@ -1,18 +1,14 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const mqtt = require('mqtt');
 const Device = require('./models/device.model');
+const { createMqttClient } = require('./services/mqtt.client');
 
 // Configuration
 const DEVICE_ID = "55899029-5b66-41ea-97b4-aaefbe55e9c7";
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/iot-platform"; // Update if using Atlas
 
 // 1. MQTT Cleanup (Publish Retained "offline")
-const client = mqtt.connect('mqtts://8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud:8883', {
-    username: 'Iotdevice',
-    password: 'Jeremy@2016',
-    rejectUnauthorized: true,
-});
+const client = createMqttClient();
 
 client.on('connect', () => {
     console.log("✅ Connected to MQTT Broker");

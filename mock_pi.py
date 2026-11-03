@@ -2,6 +2,7 @@ import time
 import json
 import random
 import sys
+import os
 
 try:
     import paho.mqtt.client as mqtt
@@ -11,8 +12,10 @@ except ImportError:
 
 # --- CONFIGURATION ---
 DEVICE_ID = "55899029-5b66-41ea-97b4-aaefbe55e9c7"
-BROKER_ADDRESS = "8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud"
-PORT = 8883 
+BROKER_ADDRESS = os.environ["MQTT_HOST"]
+PORT = int(os.environ["MQTT_PORT"])
+MQTT_USERNAME = os.environ["MQTT_USERNAME"]
+MQTT_PASSWORD = os.environ["MQTT_PASSWORD"]
 TELEMETRY_TOPIC = f"devices/{DEVICE_ID}/data"
 COMMAND_TOPIC = f"devices/{DEVICE_ID}/commands"
 STATUS_TOPIC = f"devices/{DEVICE_ID}/status"
@@ -60,7 +63,7 @@ def on_message(client, userdata, msg):
 
 # --- SETUP ---
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "MockPi_Simulator")
-client.username_pw_set('Iotdevice', 'Jeremy@2016')
+client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 client.tls_set()
 
 # LWT: Last Will and Testament

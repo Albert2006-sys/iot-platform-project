@@ -7,7 +7,6 @@ const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/error.middleware');
 
 // Initializers
-const initializeMqttBroker = require('./services/mqtt.server');
 const initializeDataProcessor = require('./services/data.processor');
 const { initializeWebSocket } = require('./services/websocket.server');
 const { initializeCommandPublisher } = require('./services/command.publisher');
@@ -26,7 +25,11 @@ dotenv.config();
 connectDB();
 const app = express();
 
-app.use(cors());
+const frontendOrigin = process.env.FRONTEND_ORIGIN;
+if (!frontendOrigin) {
+  throw new Error('FRONTEND_ORIGIN must be configured');
+}
+app.use(cors({ origin: frontendOrigin }));
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 
@@ -44,7 +47,6 @@ const server = http.createServer(app);
 
 // Initialize all services
 initializeWebSocket(server);
-initializeMqttBroker();
 initializeDataProcessor();
 initializeCommandPublisher();
 initializeSchemaDiscoverer();

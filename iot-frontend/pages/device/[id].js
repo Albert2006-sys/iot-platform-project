@@ -95,7 +95,7 @@ function DeviceDetailPage() {
   useEffect(() => {
     if (!device?.deviceId || !token) return;
 
-    socketRef.current = io('http://localhost:5000', {
+    socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
       auth: { token },
       transports: ['websocket']
     });
@@ -751,7 +751,7 @@ function DeviceDetailPage() {
                           type="range"
                           min={ctrl.min || 0}
                           max={ctrl.max || 100}
-                          onMouseUp={(e) => sendCommand(ctrl.command_key, e.target.value)}
+                          onMouseUp={(e) => sendCommand(ctrl.command_key, Number(e.target.value))}
                           className="w-24 accent-cyan-500"
                         />
                       </div>
@@ -762,7 +762,7 @@ function DeviceDetailPage() {
                         <input
                           type="checkbox"
                           className="sr-only peer"
-                          onChange={(e) => sendCommand(ctrl.command_key, e.target.checked ? 'ON' : 'OFF')}
+                          onChange={(e) => sendCommand(ctrl.command_key, e.target.checked)}
                         />
                         <div className="w-9 h-5 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
                       </label>
@@ -925,16 +925,16 @@ function DeviceDetailPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm text-slate-400 mb-1">Broker Address</label>
-                      <input className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-slate-400 font-mono text-sm" value="8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud" readOnly />
+                      <input className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-slate-400 font-mono text-sm" value={device?.broker_url || ''} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm text-slate-400 mb-1">Port</label>
-                      <input className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-slate-400 font-mono text-sm" value="8883" readOnly />
+                      <input className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-slate-400 font-mono text-sm" value={device?.broker_port || ''} readOnly />
                     </div>
                   </div>
 
                   <div className="mt-6">
-                    <ConnectionWizard device={{ ...device, broker_url: '8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud', broker_port: 8883 }} />
+                    <ConnectionWizard device={device} />
                   </div>
                 </div>
                 <div>

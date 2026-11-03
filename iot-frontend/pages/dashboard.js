@@ -45,7 +45,7 @@ function DashboardPage() {
     useEffect(() => {
         if (!token) return;
 
-        const socket = io('http://localhost:5000', {
+        const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
             auth: { token },
             transports: ['websocket'],
         });
@@ -213,4 +213,3 @@ export default function ProtectedDashboard() {
         </ProtectedRoute>
     );
 }
-

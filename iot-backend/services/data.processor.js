@@ -1,15 +1,10 @@
-const mqtt = require('mqtt');
 const Telemetry = require('../models/telemetry.model');
 const Device = require('../models/device.model');
 const eventEmitter = require('../utils/eventEmitter');
+const { createMqttClient } = require('./mqtt.client');
 
 const initializeDataProcessor = () => {
-    // HiveMQ Cloud Connection
-    const client = mqtt.connect('mqtts://8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud:8883', {
-        username: 'Iotdevice',
-        password: 'Jeremy@2016',
-        rejectUnauthorized: true,
-    });
+    const client = createMqttClient();
 
     client.on('connect', () => {
         console.log('📊 Data Processor connected to MQTT broker');

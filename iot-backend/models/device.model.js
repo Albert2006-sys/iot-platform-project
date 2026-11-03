@@ -28,8 +28,8 @@ const deviceSchema = mongoose.Schema({
   status: { type: String, enum: ['online', 'offline'], default: 'offline' },
   
   // Customizable MQTT settings
-  broker_url: { type: String, default: '8efd95372b1e4eb58c0e7a0eef38c918.s1.eu.hivemq.cloud' }, 
-  broker_port: { type: Number, default: 8883 },
+  broker_url: { type: String },
+  broker_port: { type: Number },
   client_id: { type: String },
 
   telemetryTopic: { type: String, required: true, unique: true },

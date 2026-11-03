@@ -4,10 +4,9 @@ const { protect } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-router.post('/:deviceId', createTelemetry);
-
 router.use(protect);
 
+router.post('/:deviceId', createTelemetry);
 router.route('/:deviceId')
   .get(getTelemetry);
 

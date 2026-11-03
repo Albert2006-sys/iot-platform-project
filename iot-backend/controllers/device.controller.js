@@ -43,6 +43,8 @@ const registerDevice = asyncHandler(async (req, res) => {
         // --- FIX: Use the 'groupId' variable to associate the group ---
         group: groupId || null, 
         user: req.user.id,
+        broker_url: process.env.MQTT_HOST,
+        broker_port: Number(process.env.MQTT_PORT),
         telemetryTopic: telemetryTopic,
         commandTopic: `devices/${deviceId}/commands`,
         credentials: {
@@ -184,4 +186,3 @@ module.exports = {
     updateDeviceControl,
     updateDevice,
 };
-

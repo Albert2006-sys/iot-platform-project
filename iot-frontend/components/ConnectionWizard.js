@@ -12,8 +12,8 @@ import json
 import paho.mqtt.client as mqtt
 
 # Device Configuration
-BROKER = "${device.broker_url || 'localhost'}"
-PORT = ${device.broker_port || 1883}
+BROKER = "${device.broker_url || ''}"
+PORT = ${device.broker_port || 0}
 DEVICE_ID = "${device.deviceId}"
 TELEMETRY_TOPIC = "${device.telemetryTopic}"
 # Note: In production, use username/password
@@ -48,7 +48,7 @@ ${device.data_map?.map(m => `        "${m.raw_key}": 25.5, # Type: ${m.type}`).j
 
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-const char* mqtt_server = "${device.broker_url || '192.168.1.10'}";
+const char* mqtt_server = "${device.broker_url || ''}";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -60,7 +60,7 @@ void setup() {
     delay(500);
     Serial.println("Connecting to WiFi..");
   }
-  client.setServer(mqtt_server, ${device.broker_port || 1883});
+  client.setServer(mqtt_server, ${device.broker_port || 0});
 }
 
 void loop() {

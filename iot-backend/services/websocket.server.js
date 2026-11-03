@@ -7,8 +7,37 @@ const { publishCommand } = require('./command.publisher');
 
 let io;
 
+const validateCommand = (device, payload) => {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return 'Command payload must be an object';
+  }
+
+  const { target, value } = payload;
+  if (typeof target !== 'string' || target.length === 0) {
+    return 'Command target is required';
+  }
+  if (!['number', 'boolean'].includes(typeof value) || (typeof value === 'number' && !Number.isFinite(value))) {
+    return 'Command value must be a finite number or boolean';
+  }
+
+  const mapping = (device.data_map || []).find(item => item.raw_key === target);
+  const control = (device.controls || []).find(item => item.command_key === target);
+  if (!mapping && !control) {
+    return 'Command target is not configured for this device';
+  }
+  if (control && typeof value === 'number') {
+    if (control.min !== undefined && value < control.min) return 'Command value is below the configured minimum';
+    if (control.max !== undefined && value > control.max) return 'Command value is above the configured maximum';
+  }
+  return null;
+};
+
 const initializeWebSocket = (server) => {
-  io = new Server(server, { cors: { origin: '*' } });
+  const origin = process.env.FRONTEND_ORIGIN;
+  if (!origin) {
+    throw new Error('FRONTEND_ORIGIN must be configured');
+  }
+  io = new Server(server, { cors: { origin } });
 
   // Middleware to authenticate new WebSocket connections
   io.use(async (socket, next) => {
@@ -43,10 +72,20 @@ const initializeWebSocket = (server) => {
     socket.on('device-command', async (command) => {
       try {
         const { deviceId, payload } = command;
-        if (!deviceId || !payload) return;
+        if (!deviceId) {
+          socket.emit('command-error', { message: 'Device ID is required' });
+          return;
+        }
         const device = await Device.findOne({ deviceId, user: socket.user.id });
         if (device) {
+          const validationError = validateCommand(device, payload);
+          if (validationError) {
+            socket.emit('command-error', { message: validationError });
+            return;
+          }
           publishCommand(device.commandTopic, payload);
+        } else {
+          socket.emit('command-error', { message: 'Device not found' });
         }
       } catch (error) {
         console.error('Error processing device-command:', error);
