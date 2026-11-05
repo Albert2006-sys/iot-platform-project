@@ -16,6 +16,9 @@ const validateCommand = (device, payload) => {
   if (typeof target !== 'string' || target.length === 0) {
     return 'Command target is required';
   }
+  if (target === '__fault') {
+    return typeof value === 'string' && ['overheat', 'normal'].includes(value) ? null : 'Fault command must be overheat or normal';
+  }
   if (!['number', 'boolean'].includes(typeof value) || (typeof value === 'number' && !Number.isFinite(value))) {
     return 'Command value must be a finite number or boolean';
   }
@@ -41,9 +44,6 @@ const initializeWebSocket = (server) => {
 
   // Middleware to authenticate new WebSocket connections
   io.use(async (socket, next) => {
-    // DEBUG: Log the authentication payload from the client
-    console.log("Auth payload from client:", socket.handshake.auth); 
-    
     const token = socket.handshake.auth.token;
     if (!token) {
       return next(new Error('Authentication error: No token provided'));

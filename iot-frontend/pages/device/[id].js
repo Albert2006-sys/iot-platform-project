@@ -37,6 +37,7 @@ import {
 } from 'recharts';
 import api from '../../services/api';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import AIActionCenter from '../../components/AIActionCenter';
 import Modal from '../../components/Modal'; // Assuming Modal component exists
 
 function DeviceDetailPage() {
@@ -69,8 +70,23 @@ function DeviceDetailPage() {
   const [isRebooting, setIsRebooting] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [aiInsights, setAiInsights] = useState(null);
+  const [liveAlerts, setLiveAlerts] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [proposals, setProposals] = useState([]);
+  const [proposalBusyId, setProposalBusyId] = useState(null);
+  const [proposalError, setProposalError] = useState('');
   const debouncedSendRef = useRef(null);
+
+  const mergeProposal = useCallback(proposal => {
+    if (!proposal?._id) return;
+    setProposals(prev => {
+      const index = prev.findIndex(item => item._id === proposal._id);
+      if (index === -1) return [proposal, ...prev];
+      const next = [...prev];
+      next[index] = { ...next[index], ...proposal };
+      return next;
+    });
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -136,10 +152,40 @@ function DeviceDetailPage() {
       }
     });
 
+    socket.on('new-alert', (alert) => {
+      setLiveAlerts(prev => {
+        const withoutExisting = prev.filter(item => item.anomalyId !== alert.anomalyId);
+        return [alert, ...withoutExisting].slice(0, 5);
+      });
+
+      socket.on('ai-proposal', mergeProposal);
+      socket.on('proposal-update', mergeProposal);
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [device?.deviceId, token]);
+  }, [device?.deviceId, token, mergeProposal]);
+
+  useEffect(() => {
+    if (!device?.deviceId) return;
+    api.get(`/devices/${device.deviceId}/proposals`)
+      .then(res => res.data.forEach(mergeProposal))
+      .catch(() => setProposalError('Failed to load AI proposals.'));
+  }, [device?.deviceId, mergeProposal]);
+
+  const handleProposalAction = async (proposalId, action) => {
+    setProposalBusyId(proposalId);
+    setProposalError('');
+    try {
+      const response = await api.post(`/proposals/${proposalId}/${action}`);
+      mergeProposal(response.data);
+    } catch (requestError) {
+      setProposalError(requestError.response?.data?.message || `Failed to ${action} proposal.`);
+    } finally {
+      setProposalBusyId(null);
+    }
+  };
 
   // Fetch historical telemetry
   useEffect(() => {
@@ -167,6 +213,32 @@ function DeviceDetailPage() {
         })
         .catch(err => console.error("Initial fetch failed", err));
     }
+  }, [device?.deviceId]);
+
+  useEffect(() => {
+    if (!device?.deviceId) return;
+    api.get(`/devices/${device.deviceId}/anomalies?status=open`)
+      .then(res => {
+        const alerts = res.data.map(anomaly => ({
+          id: anomaly._id,
+          anomalyId: anomaly._id,
+          type: anomaly.severity === 'critical' ? 'danger' : 'warning',
+          title: `${anomaly.severity === 'critical' ? 'Critical' : 'Warning'} anomaly on ${anomaly.deviceId}`,
+          message: `${anomaly.key} is ${Number(anomaly.value).toFixed(2)} (z-score ${Number(anomaly.zScore).toFixed(2)})`,
+          timestamp: anomaly.createdAt,
+          status: anomaly.status,
+          severity: anomaly.severity,
+          key: anomaly.key,
+          value: anomaly.value,
+        }));
+        setLiveAlerts(prev => {
+          const merged = [...alerts, ...prev];
+          return merged.filter((alert, index, list) => (
+            list.findIndex(item => item.anomalyId === alert.anomalyId) === index
+          )).slice(0, 5);
+        });
+      })
+      .catch(error => console.error('Failed to load open anomalies:', error));
   }, [device?.deviceId]);
 
   useEffect(() => {
@@ -474,6 +546,37 @@ function DeviceDetailPage() {
         </div>
 
         {/* AI Insights Bar - Global Alert & Insight Center */}
+        {liveAlerts.length > 0 && (
+          <div className="mb-8 space-y-3">
+            {liveAlerts.map(alert => (
+              <div
+                key={alert.id}
+                className={`rounded-xl border p-4 shadow-lg ${
+                  alert.severity === 'critical'
+                    ? 'border-red-500/50 bg-red-950/40'
+                    : 'border-amber-500/50 bg-amber-950/30'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className={`mt-0.5 h-5 w-5 ${
+                    alert.severity === 'critical' ? 'text-red-400' : 'text-amber-400'
+                  }`} />
+                  <div>
+                    <p className="font-semibold text-white">{alert.title}</p>
+                    <p className="text-sm text-slate-300">{alert.message}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <AIActionCenter
+          proposals={proposals}
+          onApprove={proposalId => handleProposalAction(proposalId, 'approve')}
+          onReject={proposalId => handleProposalAction(proposalId, 'reject')}
+          busyId={proposalBusyId}
+          error={proposalError}
+        />
         <div className="relative mb-8 p-5 overflow-hidden border shadow-lg bg-slate-800/50 border-cyan-500/30 rounded-xl backdrop-blur-sm">
           <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500/5 rounded-bl-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/5 rounded-tr-full blur-3xl"></div>
@@ -582,7 +685,7 @@ function DeviceDetailPage() {
               <div className="flex items-center justify-center p-6 rounded-lg bg-slate-900/30 border border-slate-700 border-dashed">
                 <div className="text-center">
                   <BrainCircuit className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">Click "Generate Report" to analyze telemetry data</p>
+                  <p className="text-sm text-slate-500">Click &quot;Generate Report&quot; to analyze telemetry data</p>
                 </div>
               </div>
             )}

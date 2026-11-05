@@ -2,6 +2,7 @@ const Telemetry = require('../models/telemetry.model');
 const Device = require('../models/device.model');
 const eventEmitter = require('../utils/eventEmitter');
 const { createMqttClient } = require('./mqtt.client');
+const { setCommandKeys } = require('./simulator.capabilities');
 
 const initializeDataProcessor = () => {
     const client = createMqttClient();
@@ -27,6 +28,7 @@ const initializeDataProcessor = () => {
                 try {
                     const json = JSON.parse(payloadString);
                     status = json.status || json; // Handle {"status":"online"} or just "online" (if valid json string)
+                    setCommandKeys(deviceId, json.commandKeys);
                 } catch (e) {
                     // Handle raw string "online" / "offline"
                     status = payloadString;

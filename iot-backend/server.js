@@ -1,5 +1,6 @@
 const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config();
 const cors = require('cors');
 const http = require('http');
 const { rateLimit } = require('express-rate-limit');
@@ -13,6 +14,7 @@ const { initializeCommandPublisher } = require('./services/command.publisher');
 const initializeSchemaDiscoverer = require('./services/schema.discover');
 const { initializeAIService } = require('./services/ai.service');
 const initializeAlertService = require('./services/alert.service');
+const { initializeProposalService } = require('./services/proposal.service');
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
@@ -20,8 +22,8 @@ const userRoutes = require('./routes/user.routes');
 const groupRoutes = require('./routes/group.routes');
 const deviceRoutes = require('./routes/device.routes');
 const telemetryRoutes = require('./routes/telemetry.routes');
+const proposalRoutes = require('./routes/proposal.routes');
 
-dotenv.config();
 connectDB();
 const app = express();
 
@@ -38,6 +40,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/telemetry', telemetryRoutes);
+app.use('/api/proposals', proposalRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -52,5 +55,6 @@ initializeCommandPublisher();
 initializeSchemaDiscoverer();
 initializeAIService();
 initializeAlertService();
+initializeProposalService();
 
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

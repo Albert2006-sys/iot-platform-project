@@ -10,6 +10,8 @@ const {
   updateDevice
 } = require('../controllers/device.controller');
 const { protect } = require('../middleware/auth.middleware');
+const { getDeviceAnomalies } = require('../controllers/anomaly.controller');
+const { getDeviceProposals } = require('../controllers/proposal.controller');
 
 const router = express.Router();
 
@@ -23,6 +25,9 @@ router.route('/:id')
   .get(getDeviceById)
   .delete(deleteDevice)
   .patch(updateDevice);
+
+router.get('/:deviceId/anomalies', getDeviceAnomalies);
+router.get('/:id/proposals', getDeviceProposals);
 
 router.route('/:id/schema')
   .patch(updateDeviceSchema);
