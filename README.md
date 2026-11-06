@@ -1,189 +1,181 @@
 # LumenLink
 
-*Illuminate the invisible. Link the impossible.*
+> **Illuminate the invisible. Link the impossible.**
 
-A full-stack IoT platform for managing and monitoring IoT devices with real-time data visualization, MQTT communication, and AI-powered analytics.
+[![Node.js](https://img.shields.io/badge/Node.js-runtime-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-database-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Gemini](https://img.shields.io/badge/Google%20Gemini-AI-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![MQTT](https://img.shields.io/badge/MQTT-MQTTS%20TLS-660066)](https://mqtt.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#licence)
 
-## 🚀 Features
+LumenLink is a full-stack, real-time IoT management platform built for a hackathon. It monitors device telemetry, detects anomalies with a rolling baseline, proposes remediation with Google Gemini or a rules-based fallback, and requires human approval before sending a command back to the device.
 
-- **Real-time Device Monitoring** - Live telemetry data visualization with WebSocket updates
-- **MQTT Broker** - Built-in secure MQTT broker for device communication (ports 1883/8883)
-- **Device Management** - Add, configure, and control IoT devices
-- **Group Management** - Organize devices into logical groups
-- **AI-Powered Analytics** - Automatic anomaly detection and insights
-- **Alert System** - Real-time notifications for device anomalies
-- **Schema Discovery** - Automatic detection of device data structures
-- **Authentication & Authorization** - Secure JWT-based user management
-- **Interactive Dashboard** - Real-time charts and device controls
+## Architecture
 
-## 🛠️ Tech Stack
+```text
+Python simulator (mock_pi.py)
+        |
+        v
+MQTTS (HiveMQ Cloud, TLS port 8883)
+        |
+        v
+Node.js backend
+(anomaly detector, Gemini, Socket.IO)
+        |
+        v
+Next.js frontend
+(live dashboard, AI Action Center)
+```
 
-### Backend
-- **Node.js** with Express.js
-- **MongoDB** with Mongoose ODM
-- **MQTT** (Aedes broker)
-- **Socket.IO** for WebSocket communication
-- **JWT** for authentication
-- **bcrypt** for password hashing
+## Features
 
-### Frontend
-- **Next.js 15.5.2** (React 19)
-- **Tailwind CSS** for styling
-- **Recharts** for data visualization
-- **Axios** for API requests
-- **Socket.IO Client** for real-time updates
+| Feature | Status | Details |
+|---|---|---|
+| Real-time telemetry pipeline | Working | MQTT → backend → Socket.IO → browser |
+| Dynamic widgets | Working | Schema-agnostic widgets through `DynamicWidget.js` |
+| Device control | Working | Bidirectional MQTT commands |
+| Rolling-baseline anomaly detection | Working | Z-score detection with a 20-reading warm-up, three consecutive readings, and warning/critical severity |
+| AI anomaly proposals | Working | Gemini proposals with a rules-based fallback; the source is reported as `gemini` or `rules` |
+| Human approval workflow | Working | Users approve or reject proposals in the UI; approval publishes the command over MQTT |
+| AI Insights | Working | The **Generate Report** button calls Gemini |
+| Device and group management | Working | Manage devices and groups through the platform |
+| Telemetry export | Working | CSV and PDF export |
+| Device alerts | Working | Live alert banner on the device page |
+| UI animations | Working | Framer Motion animations for proposal cards, modal entrance, dashboard card stagger, and device page fade-ins |
+| JWT authentication | Working | JWT-based authentication |
+| End-to-end proposal status | Partial | Proposal → executed → verified works in unit tests, but was not reliably reproduced in the full live pipeline during development |
+| Deployment | Partial | Runs locally only; MongoDB is local and there is no cloud deployment |
 
-## 📋 Prerequisites
+## Tech Stack
 
-- Node.js (v18 or higher)
-- MongoDB (local or Atlas)
+| Area | Technologies |
+|---|---|
+| Backend | Node.js, Express, Mongoose, Socket.IO, `paho-mqtt` |
+| MQTT | HiveMQ Cloud over MQTTS TLS port 8883 |
+| Frontend | Next.js 15, React, Tailwind CSS, Recharts, Framer Motion, Lucide React |
+| Database | MongoDB |
+| AI | Google Gemini API (`gemini-2.5-flash`) with a rules-based fallback |
+| Device simulator | Python 3, `paho-mqtt` (`mock_pi.py`) |
+| Reporting | jsPDF, `jspdf-autotable`, CSV export |
+
+## Prerequisites
+
+- Node.js and npm
+- Python 3
+- A local MongoDB instance
+- HiveMQ Cloud MQTT credentials
+- A Google Gemini API key
 - Git
 
-## 🔧 Installation
+## Setup and Running
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/Albert2006-sys/iot-platform-project.git
-cd iot-platform-project
-```
+1. Clone the repository:
 
-2. **Install backend dependencies**
-```bash
-cd iot-backend
-npm install
-```
+   ```bash
+   git clone https://github.com/Albert2006-sys/iot-platform-project.git
+   cd iot-platform-project
+   ```
 
-3. **Install frontend dependencies**
-```bash
-cd ../iot-frontend
-npm install
-```
+2. Copy `iot-backend/.env.example` to `iot-backend/.env` and fill in:
 
-4. **Configure environment variables**
+   ```text
+   MONGO_URI
+   PORT
+   JWT_SECRET
+   JWT_EXPIRES_IN
+   GEMINI_API_KEY
+   GEMINI_MODEL
+   MQTT_HOST
+   MQTT_PORT
+   MQTT_USERNAME
+   MQTT_PASSWORD
+   DEVICE_ID
+   SIM_FAULT_HEAT
+   SIM_COOL_RATE
+   FRONTEND_ORIGIN
+   ```
 
-Create `.env` file in `iot-backend/`:
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/iot-platform
-JWT_SECRET=your_jwt_secret_key_here
-NODE_ENV=development
-```
+3. Install backend dependencies:
 
-## 🚀 Running the Application
+   ```bash
+   cd iot-backend
+   npm install
+   ```
 
-### Start Backend Server
-```bash
-cd iot-backend
-npm start
-```
-Backend runs on `http://localhost:5000`
-- MQTT broker: `mqtt://localhost:1883` (unsecure)
-- MQTTS broker: `mqtts://localhost:8883` (secure)
+4. Install frontend dependencies:
 
-### Start Frontend Server
-```bash
-cd iot-frontend
-npm run dev
-```
-Frontend runs on `http://localhost:3000`
+   ```bash
+   cd ../iot-frontend
+   npm install
+   ```
 
-## 📁 Project Structure
+   Set `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SOCKET_URL` in `iot-frontend/.env.local`.
 
-```
+5. Start MongoDB locally.
+
+6. Start the backend:
+
+   ```bash
+   cd ../iot-backend
+   npm start
+   ```
+
+7. In another terminal, start the frontend:
+
+   ```bash
+   cd iot-frontend
+   npm run dev
+   ```
+
+8. In another terminal, from the project root, start the device simulator. Its required environment variables must be set:
+
+   ```bash
+   python mock_pi.py
+   ```
+
+## Testing the AI Pipeline
+
+1. Start the backend, frontend, and simulator.
+2. Wait for at least 20 normal telemetry readings. The detector needs this warm-up period after each backend restart.
+3. From the project root, inject an overheat fault:
+
+   ```bash
+   python send_fault.py overheat
+   ```
+
+4. Review the anomaly proposal in the AI Action Center.
+5. Select **Approve** to publish the proposed command to the device over MQTT, or **Reject** to decline it.
+
+The proposal source is either `gemini` or `rules`, depending on which path produced it. The complete proposal → executed → verified status flow is covered by unit tests, but was not reliably reproduced in the full live pipeline during development.
+
+## Project Structure
+
+```text
 iot-platform-project/
-├── iot-backend/
-│   ├── config/          # Database configuration
-│   ├── controllers/     # Route controllers
-│   ├── middleware/      # Auth, validation, error handling
-│   ├── models/          # MongoDB models
-│   ├── routes/          # API routes
-│   ├── services/        # Business logic services
-│   │   ├── mqtt.server.js       # MQTT broker
-│   │   ├── websocket.server.js  # WebSocket server
-│   │   ├── ai.service.js        # AI analytics
-│   │   ├── alert.service.js     # Alert system
-│   │   ├── data.processor.js    # Data processing
-│   │   └── schema.discover.js   # Schema discovery
-│   └── utils/           # Utility functions
-│
-└── iot-frontend/
-    ├── components/      # React components
-    ├── pages/          # Next.js pages
-    ├── services/       # API & context
-    └── styles/         # Global styles
+├── iot-backend/        # Node.js backend
+├── iot-frontend/       # Next.js frontend
+├── mock_pi.py          # Python device simulator
+├── send_fault.py       # Fault injection helper
+├── test_proposals.js   # Proposal unit tests
+├── TESTING.md          # Manual test steps
+├── DEMO.md             # Demo script
+└── .env.example        # Environment variable template
 ```
 
-## 🔌 API Endpoints
+## Known Limitations
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
+- The full end-to-end proposal status flow is not reliably verified in the live pipeline.
+- The anomaly detector requires a 20-reading warm-up after each backend restart.
+- The detector keeps its rolling baseline in memory, so that baseline resets when the backend restarts.
+- The platform currently runs locally only, with a local MongoDB instance and no cloud deployment.
 
-### Devices
-- `GET /api/devices` - Get all devices
-- `POST /api/devices` - Create device
-- `GET /api/devices/:id` - Get device by ID
-- `PUT /api/devices/:id` - Update device
-- `DELETE /api/devices/:id` - Delete device
+## Built With and Acknowledgements
 
-### Groups
-- `GET /api/groups` - Get all groups
-- `POST /api/groups` - Create group
+LumenLink was built for the **INFINEX 2K26 Global AI Hackathon (PropCare NW, November 2026)** by **Albert John** ([Albert2006-sys](https://github.com/Albert2006-sys)).
 
-### Telemetry
-- `GET /api/telemetry/device/:deviceId` - Get device telemetry data
-- `GET /api/telemetry/device/:deviceId/latest` - Get latest readings
+The project uses Node.js, Express, Mongoose, Socket.IO, paho-mqtt, HiveMQ Cloud, Next.js, React, Tailwind CSS, Recharts, Framer Motion, Lucide React, MongoDB, Google Gemini, Python, jsPDF, and `jspdf-autotable`.
 
-### Users
-- `GET /api/users/profile` - Get user profile
+## Licence
 
-## 📡 MQTT Topics
-
-- `devices/{deviceId}/data` - Device telemetry data
-- `devices/{deviceId}/command` - Device commands
-
-## 🔐 Authentication
-
-The platform uses JWT tokens for authentication. Include the token in the Authorization header:
-```
-Authorization: Bearer <your_jwt_token>
-```
-
-## 🤖 AI Features
-
-- **Anomaly Detection** - Automatically detects unusual device behavior
-- **Predictive Analytics** - Forecasts potential issues
-- **Pattern Recognition** - Identifies trends in device data
-
-## 📊 Data Processing
-
-The platform includes:
-- Real-time data ingestion via MQTT
-- Automatic schema discovery for new device types
-- Data validation and normalization
-- Time-series data storage
-
-## 🛡️ Security Features
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- Rate limiting on API endpoints
-- Input validation and sanitization
-- Secure MQTT with TLS support
-
-## 📝 License
-
-This project is open source and available under the MIT License.
-
-## 👨‍💻 Author
-
-**Albert2006-sys**
-- GitHub: [@Albert2006-sys](https://github.com/Albert2006-sys)
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-
-## 📧 Support
-
-For support, email albertjohn1639@gmail.com or open an issue in the repository.
+This project is released under the [MIT Licence](https://opensource.org/license/mit/).
