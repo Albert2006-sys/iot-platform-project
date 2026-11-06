@@ -7,6 +7,7 @@ import DeviceCard from '../components/DeviceCard';
 import Modal from '../components/Modal';
 import AddDeviceForm from '../components/AddDeviceForm';
 import AddGroupForm from '../components/AddGroupForm';
+import { motion } from 'framer-motion';
 
 function DashboardPage() {
     const { token } = useAuth(); // Get auth token for socket
@@ -180,14 +181,14 @@ function DashboardPage() {
                                 <div key={groupId}>
                                     <h2 className="text-xl font-light tracking-widest uppercase text-teal-400 mb-4 pb-2 border-b border-slate-800">{devicesByGroup[groupId].name}</h2>
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                        {devicesByGroup[groupId].devices.map(device => (
+                                        {devicesByGroup[groupId].devices.map((device, index) => (
                                             // Applying a sci-fi wrapper to the existing DeviceCard component
-                                            <div key={device._id} className="bg-slate-800/50 border border-slate-700 rounded-lg backdrop-blur-sm hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all duration-300">
+                                            <motion.div key={device._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.08 }} className="bg-slate-800/50 border border-slate-700 rounded-lg backdrop-blur-sm hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all duration-300">
                                                 <DeviceCard
                                                     device={device}
                                                     onDelete={handleDeviceDelete}
                                                 />
-                                            </div>
+                                            </motion.div>
                                         ))}
                                     </div>
                                 </div>

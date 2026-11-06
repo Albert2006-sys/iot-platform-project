@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../services/context/AuthContext';
 import api from '../services/api';
+import { motion } from 'framer-motion';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,7 +26,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="p-8 bg-white rounded shadow-md w-96">
+      <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} onSubmit={handleSubmit} className="p-8 bg-white rounded shadow-md w-96">
         <h2 className="mb-6 text-2xl font-bold text-center">Login</h2>
         {error && <p className="mb-4 text-red-500">{error}</p>}
         <div className="mb-4">
@@ -54,7 +55,7 @@ export default function LoginPage() {
         >
           Sign In
         </button>
-      </form>
+      </motion.form>
     </div>
   );
 }

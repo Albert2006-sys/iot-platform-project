@@ -2,6 +2,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import IoTIllustration from '../components/IoTIllustration'; // Import the new illustration component
+import { motion } from 'framer-motion';
 
 export default function LandingPage() {
   return (
@@ -30,13 +31,17 @@ export default function LandingPage() {
         <main className="container flex flex-col items-center px-6 py-20 mx-auto text-center md:flex-row md:py-24 md:text-left gap-12">
           {/* Left Column (Text Content) */}
           <div className="md:w-1/2 animate-fade-in-left">
-            <h1 className="text-5xl font-extrabold leading-tight md:text-6xl text-slate-50"
-              style={{ textShadow: '0 0 15px rgba(56, 189, 248, 0.3)' }}>
-              Welcome to <span className="text-cyan-400">LumenLink</span>
-            </h1>
-            <p className="mt-6 text-xl text-slate-400 leading-relaxed">
-              A cloud-based platform that provides seamless connectivity and management of IoT devices with ease. Monitor, control, and automate your smart world.
-            </p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <h1 className="text-5xl font-extrabold leading-tight md:text-6xl text-slate-50"
+                style={{ textShadow: '0 0 15px rgba(56, 189, 248, 0.3)' }}>
+                Welcome to <span className="text-cyan-400">LumenLink</span>
+              </h1>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <p className="mt-6 text-xl text-slate-400 leading-relaxed">
+                A cloud-based platform that provides seamless connectivity and management of IoT devices with ease. Monitor, control, and automate your smart world.
+              </p>
+            </motion.div>
             <div className="flex flex-col justify-center mt-10 md:justify-start space-y-6">
               <div className="flex space-x-4 justify-center md:justify-start">
                 <Link

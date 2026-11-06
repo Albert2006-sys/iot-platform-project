@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link'; // Import Link for navigation
 import { useAuth } from '../services/context/AuthContext';
 import api from '../services/api';
+import { motion } from 'framer-motion';
 
 export default function RegisterPage() {
     const [username, setUsername] = useState('');
@@ -44,7 +45,7 @@ export default function RegisterPage() {
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl">
                 <div className="text-center">
                     <h2 className="text-3xl font-extrabold text-gray-900">
                         Create Your Account
@@ -105,8 +106,7 @@ export default function RegisterPage() {
                         {loading ? 'Creating Account...' : 'Sign Up'}
                     </button>
                 </form>
-            </div>
+            </motion.div>
         </div>
     );
 }
-

@@ -39,6 +39,7 @@ import api from '../../services/api';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import AIActionCenter from '../../components/AIActionCenter';
 import Modal from '../../components/Modal'; // Assuming Modal component exists
+import { motion } from 'framer-motion';
 
 function DeviceDetailPage() {
   const router = useRouter();
@@ -157,10 +158,10 @@ function DeviceDetailPage() {
         const withoutExisting = prev.filter(item => item.anomalyId !== alert.anomalyId);
         return [alert, ...withoutExisting].slice(0, 5);
       });
-
-      socket.on('ai-proposal', mergeProposal);
-      socket.on('proposal-update', mergeProposal);
     });
+
+    socket.on('ai-proposal', mergeProposal);
+    socket.on('proposal-update', mergeProposal);
 
     return () => {
       socket.disconnect();
@@ -497,7 +498,7 @@ function DeviceDetailPage() {
     <div className="min-h-screen p-6 bg-slate-900 text-slate-100">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="p-2 transition-colors rounded-lg bg-slate-800 hover:bg-slate-700">
               <ArrowLeft className="w-5 h-5 text-slate-400" />
@@ -543,7 +544,7 @@ function DeviceDetailPage() {
               <Settings className="w-4 h-4" /> Configure
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* AI Insights Bar - Global Alert & Insight Center */}
         {liveAlerts.length > 0 && (
@@ -708,12 +709,14 @@ function DeviceDetailPage() {
             };
 
             return (
+              <motion.div key={key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
               <DynamicWidget
                 key={key}
                 mapping={autoMapping}
                 value={value}
                 history={telemetryHistory}
               />
+              </motion.div>
             );
           })}
 
